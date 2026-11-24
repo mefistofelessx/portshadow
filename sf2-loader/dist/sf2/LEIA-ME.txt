@@ -1,7 +1,0 @@
-Shadow Fight 2 - M0 (diagnostico)
-
-1) Copie ShadowFight2-M0.sh e a pasta sf2/ para a pasta "ports" do cartao SD.
-2) Copie para sf2/libs/ estes 3 arquivos, tirados do APK/pasta extraida do jogo
-   (lib/armeabi-v7a/): libmain.so  libunity.so  libil2cpp.so
-3) Reinicie o EmulationStation e abra "ShadowFight2-M0" no menu Ports.
-4) O resultado fica em  ports/sf2_m0_log.txt  (e em sf2/logs/). Envie esse arquivo.
