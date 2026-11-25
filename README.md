@@ -27,3 +27,6 @@ Ainda não abre a janela do jogo. Testa:
 - **Stubs JNI novos**: `getClass`, `ClassLoader.findLibrary`, `getObbDir(s)`, `SharedPreferences` (+Editor), `Looper.getMainLooper`, `JNIBridge.newInterfaceProxy` (proxy nao-nulo), `Environment.getExternalStorageState` ("mounted"), `String.equals`, `File.exists/mkdirs`, builders de `Intent`/`AlertDialog`, excecoes pendentes (`Throw`, `ThrowNew`, `ExceptionCheck`).
 - **`AssetManager.open`** le de verdade `assets/<nome>` de dentro do APK (zip stored/deflate, inflate via `libz.so.1`) e `Scanner.useDelimiter().next()` devolve o conteudo. Se o asset nao existe, lanca `IOException` pendente.
 - **Launcher M2**: log limitado a 5 MB (`head -c`), `timeout` de 180 s, `XDG_RUNTIME_DIR`, rotacao de logs e anexo do tombstone em `sf2_m2_log.txt`.
+- **Looper/Handler/Choreographer emulados** (`fake_jni.c`): o Unity espera um `doFrame()` de VSync (via proxies `bitter.jnibridge` -> `JNIBridge.invoke`) e travava no 3o frame em `pthread_cond_wait`. Uma thread faz o papel do Looper (`Handler.post/sendMessage/obtainMessage`) e do Choreographer (~60 Hz).
+- IDs de metodo/campo estaveis (cache), parsing de argumentos JNI guiado pela assinatura (jlong em ARM32) e excecao pendente por thread.
+- Diagnostico do loop de render: heartbeat `[HB]` a cada 2 s e, se travar, dump de registradores + varredura da pilha (ate 3 vezes).
