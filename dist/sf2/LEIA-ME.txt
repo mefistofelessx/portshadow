@@ -1,0 +1,6 @@
+Shadow Fight 2 - M1 (shims + init_array + JNI_OnLoad)
+
+1) Copie ShadowFight2-M1.sh (e opcionalmente ShadowFight2-M0.sh) e a pasta sf2/
+   para a pasta "ports" do cartao SD (mantendo os 3 .so em sf2/libs/).
+2) Reinicie o EmulationStation e abra "ShadowFight2-M1" no menu Ports.
+3) O resultado fica em ports/sf2_m1_log.txt (e em sf2/logs/). Envie esse arquivo.
