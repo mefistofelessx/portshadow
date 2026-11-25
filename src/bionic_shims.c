@@ -484,34 +484,34 @@ void bionic_restore_sigmask(uint32_t mask) {
 
 typedef struct {
     union {
-        void (*sa_handler)(int);
-        void (*sa_sigaction)(int, siginfo_t *, void *);
+        void (*b_handler)(int);
+        void (*b_sigaction)(int, siginfo_t *, void *);
     };
-    uint32_t sa_mask;
-    int      sa_flags;
-    void   (*sa_restorer)(void);
+    uint32_t b_mask;
+    int      b_flags;
+    void   (*b_restorer)(void);
 } bionic_sigaction_t;
 
 static int shim_sigaction(int signum, const bionic_sigaction_t *act, bionic_sigaction_t *oldact) {
     struct sigaction ha, hoa;
     if (act) {
         memset(&ha, 0, sizeof(ha));
-        if (act->sa_flags & SA_SIGINFO)
-            ha.sa_sigaction = act->sa_sigaction;
+        if (act->b_flags & SA_SIGINFO)
+            ha.sa_sigaction = act->b_sigaction;
         else
-            ha.sa_handler = act->sa_handler;
-        bionic_mask_to_sigset(act->sa_mask, &ha.sa_mask);
-        ha.sa_flags = act->sa_flags;
+            ha.sa_handler = act->b_handler;
+        bionic_mask_to_sigset(act->b_mask, &ha.sa_mask);
+        ha.sa_flags = act->b_flags;
     }
     int r = sigaction(signum, act ? &ha : NULL, oldact ? &hoa : NULL);
     if (r == 0 && oldact) {
         if (hoa.sa_flags & SA_SIGINFO)
-            oldact->sa_sigaction = hoa.sa_sigaction;
+            oldact->b_sigaction = hoa.sa_sigaction;
         else
-            oldact->sa_handler = hoa.sa_handler;
-        oldact->sa_mask     = sigset_to_bionic_mask(&hoa.sa_mask);
-        oldact->sa_flags    = hoa.sa_flags;
-        oldact->sa_restorer = NULL;
+            oldact->b_handler = hoa.sa_handler;
+        oldact->b_mask     = sigset_to_bionic_mask(&hoa.sa_mask);
+        oldact->b_flags    = hoa.sa_flags;
+        oldact->b_restorer = NULL;
     }
     return r;
 }
