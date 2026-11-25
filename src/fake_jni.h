@@ -18,4 +18,13 @@ typedef struct {
 void *fake_jni_get_vm(void);
 void *fake_jni_get_env(void);
 
+/* Configure Android paths and display size returned to UnityPlayer via JNI. */
+void fake_jni_set_config(const char *apk_path, const char *save_dir, int w, int h);
+
+/* Create a dummy jobject with a known Java class name (e.g. Context, Surface). */
+void *fake_jni_make_object(const char *class_name);
+
+/* Look up a function pointer registered via JNI RegisterNatives. */
+void *fake_jni_find_native(const char *class_name, const char *method_name);
+
 #endif /* FAKE_JNI_H */
