@@ -1,6 +1,20 @@
-Shadow Fight 2 - M1 (shims + init_array + JNI_OnLoad)
+Shadow Fight 2 - M2 (SDL2 + Mali EGL + Unity Render Loop)
 
-1) Copie ShadowFight2-M1.sh (e opcionalmente ShadowFight2-M0.sh) e a pasta sf2/
-   para a pasta "ports" do cartao SD (mantendo os 3 .so em sf2/libs/).
-2) Reinicie o EmulationStation e abra "ShadowFight2-M1" no menu Ports.
-3) O resultado fica em ports/sf2_m1_log.txt (e em sf2/logs/). Envie esse arquivo.
+Passo a passo no R36 Ultra X:
+1) Extraia sf2-m2.zip diretamente na pasta "ports/" do cartao SD.
+2) O arquivo do APK do jogo (Shadow Fight 2) deve ser renomeado para "game.apk"
+   e colocado dentro de "ports/sf2/game.apk".
+3) Em "ports/sf2/libs/", certifique-se de ter:
+   - libmain.so
+   - libunity.so
+   - libil2cpp.so
+   E copie tambem os outros .so do APK (da pasta lib/armeabi-v7a/):
+   - libcrashlytics.so
+   - libcrashlytics-common.so
+   - libcrashlytics-handler.so
+   - libcrashlytics-trampoline.so
+   - libFirebaseCppApp-9_3_0.so
+   - libFirebaseCppCrashlytics.so
+   - libFirebaseCppMessaging.so
+4) Abra o menu Ports no EmulationStation e execute "ShadowFight2-M2".
+5) O log sera gerado em "ports/sf2_m2_log.txt" (e em sf2/logs/).
