@@ -129,7 +129,9 @@ int so_load(so_module *mod, const char *filename) {
         if (phdr[i].p_flags & PF_W) prot |= PROT_WRITE;
         if (phdr[i].p_flags & PF_X) prot |= PROT_EXEC;
         /* Keep WRITE for now — we'll need it for relocations */
-        mprotect(dst, ALIGN_MEM(phdr[i].p_memsz, phdr[i].p_align), prot | PROT_WRITE);
+        uintptr_t mpage = (uintptr_t)dst & ~(4095UL);
+        size_t mlen = ALIGN_MEM(phdr[i].p_memsz + ((uintptr_t)dst - mpage), 4096);
+        mprotect((void *)mpage, mlen, prot | PROT_WRITE);
 
         if (phdr[i].p_flags & PF_X) {
             mod->text_base = (uintptr_t)dst;
@@ -283,11 +285,17 @@ int so_resolve(so_module *mod, const so_default_dynlib *dynlib, int dynlib_size,
     return unresolved;
 }
 
-void so_initialize(so_module *mod) {
+void so_initialize_tracked(so_module *mod, volatile int *out_idx, volatile uintptr_t *out_fn) {
     for (int i = 0; i < mod->num_init_array; i++) {
         void (*fn)(void) = (void (*)(void))mod->init_array[i];
+        if (out_idx) *out_idx = i;
+        if (out_fn)  *out_fn  = (uintptr_t)fn;
         if (fn && (uintptr_t)fn != 0xffffffff) fn();
     }
+}
+
+void so_initialize(so_module *mod) {
+    so_initialize_tracked(mod, NULL, NULL);
 }
 
 /* ── Symbol lookup ─────────────────────────────────────────────────────── */

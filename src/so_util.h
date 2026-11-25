@@ -63,6 +63,7 @@ int       so_load(so_module *mod, const char *filename);
 int       so_relocate(so_module *mod);
 int       so_resolve(so_module *mod, const so_default_dynlib *dynlib, int dynlib_size, int only_dynlib);
 void      so_initialize(so_module *mod);
+void      so_initialize_tracked(so_module *mod, volatile int *out_idx, volatile uintptr_t *out_fn);
 uintptr_t so_symbol(so_module *mod, const char *symbol);
 so_module *so_find_module(const char *name);
 uintptr_t so_find_symbol_global(const char *symbol);

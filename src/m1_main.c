@@ -27,6 +27,20 @@ typedef int (*jni_onload_fn)(void *vm, void *reserved);
 static so_module g_mods[3];
 static const char *g_mod_names[3] = { "libmain.so", "libunity.so", "libil2cpp.so" };
 static int g_mods_loaded = 0;
+static volatile int g_cur_mod = -1;
+static volatile int g_cur_init_idx = -1;
+static volatile uintptr_t g_cur_init_fn = 0;
+
+static void print_addr_owner(const char *tag, uintptr_t v) {
+    for (int i = 0; i < g_mods_loaded; i++) {
+        so_module *m = &g_mods[i];
+        if (v >= m->map_base && v < m->map_base + m->map_size) {
+            fprintf(stderr, "   %s = 0x%08lx (%s + 0x%08lx)\n",
+                    tag, (unsigned long)v, g_mod_names[i], (unsigned long)(v - m->load_bias));
+            return;
+        }
+    }
+}
 
 static void crash_handler(int sig, siginfo_t *si, void *ucv) {
     ucontext_t *uc = (ucontext_t *)ucv;
@@ -41,17 +55,42 @@ static void crash_handler(int sig, siginfo_t *si, void *ucv) {
     fprintf(stderr, "\n[CRASH] sinal=%d addr=%p pc=0x%08lx lr=0x%08lx sp=0x%08lx\n",
             sig, si ? si->si_addr : NULL,
             (unsigned long)pc, (unsigned long)lr, (unsigned long)sp);
-    for (int i = 0; i < g_mods_loaded; i++) {
-        so_module *m = &g_mods[i];
-        if (pc >= m->map_base && pc < m->map_base + m->map_size) {
-            fprintf(stderr, "[CRASH] PC dentro de %s + 0x%08lx\n",
-                    g_mod_names[i], (unsigned long)(pc - m->load_bias));
-        }
-        if (lr >= m->map_base && lr < m->map_base + m->map_size) {
-            fprintf(stderr, "[CRASH] LR dentro de %s + 0x%08lx\n",
-                    g_mod_names[i], (unsigned long)(lr - m->load_bias));
+    if (g_cur_mod >= 0 && g_cur_mod < 3) {
+        fprintf(stderr, "[CRASH] etapa: %s init_array[%d] = 0x%08lx (off +0x%08lx)\n",
+                g_mod_names[g_cur_mod], g_cur_init_idx,
+                (unsigned long)g_cur_init_fn,
+                (unsigned long)(g_cur_init_fn - g_mods[g_cur_mod].load_bias));
+    }
+    print_addr_owner("PC", pc);
+    print_addr_owner("LR", lr);
+#ifdef __arm__
+    if (uc) {
+        fprintf(stderr,
+                "   r0=%08lx r1=%08lx r2=%08lx r3=%08lx\n"
+                "   r4=%08lx r5=%08lx r6=%08lx r7=%08lx\n"
+                "   r8=%08lx r9=%08lx r10=%08lx fp=%08lx ip=%08lx cpsr=%08lx\n",
+                (unsigned long)uc->uc_mcontext.arm_r0,  (unsigned long)uc->uc_mcontext.arm_r1,
+                (unsigned long)uc->uc_mcontext.arm_r2,  (unsigned long)uc->uc_mcontext.arm_r3,
+                (unsigned long)uc->uc_mcontext.arm_r4,  (unsigned long)uc->uc_mcontext.arm_r5,
+                (unsigned long)uc->uc_mcontext.arm_r6,  (unsigned long)uc->uc_mcontext.arm_r7,
+                (unsigned long)uc->uc_mcontext.arm_r8,  (unsigned long)uc->uc_mcontext.arm_r9,
+                (unsigned long)uc->uc_mcontext.arm_r10, (unsigned long)uc->uc_mcontext.arm_fp,
+                (unsigned long)uc->uc_mcontext.arm_ip,  (unsigned long)uc->uc_mcontext.arm_cpsr);
+        print_addr_owner("r0", (uintptr_t)uc->uc_mcontext.arm_r0);
+        print_addr_owner("r4", (uintptr_t)uc->uc_mcontext.arm_r4);
+        print_addr_owner("r6", (uintptr_t)uc->uc_mcontext.arm_r6);
+        if (sp >= 0x10000) {
+            const uintptr_t *stk = (const uintptr_t *)sp;
+            fprintf(stderr, "   stack[0..15]:\n");
+            for (int k = 0; k < 16; k++) {
+                char tag[16];
+                snprintf(tag, sizeof(tag), "sp[%2d]", k);
+                fprintf(stderr, "     sp[%2d] = 0x%08lx\n", k, (unsigned long)stk[k]);
+                print_addr_owner(tag, stk[k]);
+            }
         }
     }
+#endif
     fflush(stderr);
     _exit(128 + sig);
 }
@@ -155,9 +194,13 @@ int m1_run(const char *dir) {
     printf("\n=== 3) Executando .init_array ===\n");
     for (int i = 0; i < 3; i++) {
         printf("   init_array %s (%d funcoes)...\n", g_mod_names[i], g_mods[i].num_init_array);
-        so_initialize(&g_mods[i]);
+        g_cur_mod = i;
+        g_cur_init_idx = -1;
+        g_cur_init_fn = 0;
+        so_initialize_tracked(&g_mods[i], &g_cur_init_idx, &g_cur_init_fn);
         printf("   init_array %s OK\n", g_mod_names[i]);
     }
+    g_cur_mod = -1;
 
     printf("\n=== 4) Chamando JNI_OnLoad ===\n");
     void *vm = fake_jni_get_vm();
