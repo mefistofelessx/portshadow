@@ -992,6 +992,35 @@ static char *shim_mkdtemp(char *tmpl) {
     return mkdtemp(tmpl);
 }
 
+static long shim_sysconf(int name) {
+    int gname = -1;
+    switch (name) {
+        case 0x0000: gname = _SC_ARG_MAX; break;
+        case 0x0005: gname = _SC_CHILD_MAX; break;
+        case 0x0006: gname = _SC_CLK_TCK; break;
+        case 0x000a: gname = _SC_NGROUPS_MAX; break;
+        case 0x000b: gname = _SC_OPEN_MAX; break;
+        case 0x0027: gname = _SC_PAGESIZE; break;
+        case 0x0046: gname = _SC_GETGR_R_SIZE_MAX; break;
+        case 0x0047: gname = _SC_GETPW_R_SIZE_MAX; break;
+        case 0x004e: gname = _SC_LOGIN_NAME_MAX; break;
+        case 0x0059: gname = _SC_THREAD_STACK_MIN; break;
+        case 0x005e: gname = _SC_TTY_NAME_MAX; break;
+        case 0x0060: gname = _SC_NPROCESSORS_CONF; break;
+        case 0x0061: gname = _SC_NPROCESSORS_ONLN; break;
+        case 0x0062: gname = _SC_PHYS_PAGES; break;
+        case 0x0063: gname = _SC_AVPHYS_PAGES; break;
+        case 0x0064: gname = _SC_MONOTONIC_CLOCK; break;
+        case 0x0067: gname = _SC_HOST_NAME_MAX; break;
+        case 0x006e: gname = _SC_IOV_MAX; break;
+        default:
+            fprintf(stderr, "[SHIM] sysconf(unmapped=%d) -> EINVAL\n", name);
+            errno = EINVAL;
+            return -1;
+    }
+    return sysconf(gname);
+}
+
 /* ── dlopen / dlsym / dlclose / dlerror / dladdr ───────────────────────── */
 
 #define BIONIC_RTLD_DEFAULT ((void *)(uintptr_t)0xffffffff)
@@ -1242,6 +1271,7 @@ static const so_default_dynlib g_bionic_shims[] = {
     { "execl",                      (uintptr_t)shim_execl },
     { "qsort",                      (uintptr_t)shim_qsort },
     { "mkdtemp",                    (uintptr_t)shim_mkdtemp },
+    { "sysconf",                    (uintptr_t)shim_sysconf },
 };
 
 const so_default_dynlib *bionic_get_shims(int *out_bytes) {
