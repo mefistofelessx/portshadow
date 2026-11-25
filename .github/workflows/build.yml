@@ -26,18 +26,19 @@ jobs:
           echo "--- versoes de GLIBC exigidas:"
           arm-linux-gnueabihf-objdump -T sf2loader | grep -oE 'GLIBC_[0-9.]+' | sort -uV | tr '\n' ' '; echo
 
-      - name: Montar pacote M1
+      - name: Montar pacote M2
         run: |
-          mkdir -p pkg/sf2/libs pkg/sf2/logs
+          mkdir -p pkg/sf2/libs pkg/sf2/logs pkg/sf2/save
           cp sf2loader pkg/sf2/sf2loader
           cp dist/ShadowFight2-M0.sh pkg/ShadowFight2-M0.sh
           cp dist/ShadowFight2-M1.sh pkg/ShadowFight2-M1.sh
+          cp dist/ShadowFight2-M2.sh pkg/ShadowFight2-M2.sh
           cp dist/sf2/LEIA-ME.txt pkg/sf2/LEIA-ME.txt
-          chmod +x pkg/ShadowFight2-M0.sh pkg/ShadowFight2-M1.sh pkg/sf2/sf2loader
-          cd pkg && zip -r ../sf2-m1.zip .
+          chmod +x pkg/*.sh pkg/sf2/sf2loader
+          cd pkg && zip -r ../sf2-m2.zip .
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sf2-m1
-          path: sf2-m1.zip
+          name: sf2-m2
+          path: sf2-m2.zip
           if-no-files-found: error
