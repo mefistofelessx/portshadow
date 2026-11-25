@@ -19,3 +19,11 @@ Ainda não abre a janela do jogo. Testa:
 1. Extraia o `sf2-m1.zip` dentro da pasta `ports` do cartão SD (mantendo `libmain.so`, `libunity.so` e `libil2cpp.so` em `ports/sf2/libs/`).
 2. Reinicie o EmulationStation, abra **ShadowFight2-M1** em Ports e aguarde voltar ao menu.
 3. Envie `ports/sf2_m1_log.txt`.
+
+## M2 — janela SDL2 + loop Unity (correcoes desta revisao)
+- **Loop infinito de "main thread is trapped"**: o handler de SIGSEGV do Unity retorna e a instrucao falha de novo. O `sigaction` do shim agora envolve os handlers de sinais fatais; na segunda falha identica o loader encerra (`[LOADER] Falha fatal repetida`).
+- **`UnityPlayer.kill()`** agora encerra o processo (codigo 3) em vez de retornar.
+- **Diagnostico**: `AlertDialog$Builder.setTitle/setMessage` imprimem o texto do erro fatal do Unity como `[JNI][DIALOGO]`; `FatalError` do JNI tambem; funcoes JNIEnv nao implementadas sao logadas pelo indice; falhas de `stat`/`fopen` aparecem como `[FS]`.
+- **Stubs JNI novos**: `getClass`, `ClassLoader.findLibrary`, `getObbDir(s)`, `SharedPreferences` (+Editor), `Looper.getMainLooper`, `JNIBridge.newInterfaceProxy` (proxy nao-nulo), `Environment.getExternalStorageState` ("mounted"), `String.equals`, `File.exists/mkdirs`, builders de `Intent`/`AlertDialog`, excecoes pendentes (`Throw`, `ThrowNew`, `ExceptionCheck`).
+- **`AssetManager.open`** le de verdade `assets/<nome>` de dentro do APK (zip stored/deflate, inflate via `libz.so.1`) e `Scanner.useDelimiter().next()` devolve o conteudo. Se o asset nao existe, lanca `IOException` pendente.
+- **Launcher M2**: log limitado a 5 MB (`head -c`), `timeout` de 180 s, `XDG_RUNTIME_DIR`, rotacao de logs e anexo do tombstone em `sf2_m2_log.txt`.
